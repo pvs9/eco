@@ -1,0 +1,127 @@
+rpc:
+  listen: tcp://127.0.0.1:6001
+
+server:
+  # Worker starting command, with any required arguments.
+  #
+  # This option is required.
+  command: "php ./vendor/bin/rr-worker start"
+
+  # User name (not UID) for the worker processes. An empty value means to use the RR process user.
+  #
+  # Default: ""
+  user: ""
+
+  # Group name (not GID) for the worker processes. An empty value means to use the RR process user.
+  #
+  # Default: ""
+  group: ""
+
+  # Worker relay can be: "pipes", TCP (eg.: tcp://127.0.0.1:6001), or socket (eg.: unix:///var/run/rr.sock).
+  #
+  # Default: "pipes"
+  relay: "pipes"
+
+  # Timeout for relay connection establishing (only for socket and TCP port relay).
+  #
+  # Default: 60s
+  relay_timeout: 60s
+
+logs:
+  # default
+  mode: development
+  level: debug
+  encoding: console
+  output: stdout
+  err_output: stdout
+  channels:
+    http:
+      mode: development
+      level: panic
+      encoding: console
+      output: stdout
+      err_output: stderr
+    server:
+      mode: production
+      level: info
+      encoding: json
+      output: stdout
+      err_output: stdout
+    rpc:
+      mode: production
+      level: debug
+      encoding: console
+      output: stderr
+      err_output: stdout
+
+http:
+  address: "0.0.0.0:80"
+  # middlewares for the http plugin, order matters
+  middleware: ["static", "gzip", "headers"]
+  # uploads
+  uploads:
+    # Directory for file uploads. Empty value means to use $TEMP based on your OS.
+    #
+    # Default: ""
+    dir: "/tmp"
+
+    # Deny files with the following extensions to upload.
+    #
+    # Default: [".php", ".exe", ".bat"]
+    forbid: [".php", ".exe", ".bat", ".sh"]
+  trusted_subnets:
+    [
+        "10.0.0.0/8",
+        "127.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "::1/128",
+        "fc00::/7",
+        "fe80::/10",
+    ]
+  # headers (middleware)
+  headers:
+    cors:
+      allowed_origin: "*"
+      allowed_headers: "*"
+      allowed_methods: "GET,POST,PUT,PATCH,DELETE"
+      allow_credentials: true
+      exposed_headers: "Cache-Control,Content-Language,Content-Type,Expires,Last-Modified,Pragma"
+      max_age: 600
+  # http static (middleware)
+  static:
+    dir: "public"
+    forbid: [".php"]
+  pool:
+    # default - num of logical CPUs
+    num_workers: 4
+    # default 0 - no limit
+    max_jobs: 0
+    # default 1 minute
+    allocate_timeout: 60s
+    # default 1 minute
+    destroy_timeout: 60s
+    # supervisor used to control http workers
+    supervisor:
+      # watch_tick defines how often to check the state of the workers (seconds)
+      watch_tick: 1s
+      # ttl defines maximum time worker is allowed to live (seconds)
+      ttl: 300s
+      # idle_ttl defines maximum duration worker can spend in idle mode after first use. Disabled when 0 (seconds)
+      idle_ttl: 0s
+      # exec_ttl defines maximum lifetime per job (seconds)
+      exec_ttl: 0s
+      # max_worker_memory limits memory usage per worker (MB)
+      max_worker_memory: 100
+  ssl:
+    # host and port separated by semicolon (default :443)
+    address: :443
+    redirect: true
+    # ssl cert
+    cert: /etc/letsencrypt/live/eco.ezk.expert/fullchain.pem
+    # ssl private key
+    key: /etc/letsencrypt/live/eco.ezk.expert/privkey.pem
+  # HTTP service provides HTTP2 transport
+  http2:
+    h2c: false
+    max_concurrent_streams: 128
